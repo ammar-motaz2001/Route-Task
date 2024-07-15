@@ -1,6 +1,7 @@
 import axios from 'axios'
 import React, { useEffect, useState } from 'react'
 import ChartComponent from '../Chart/Chart.jsx'
+
 export default function Home() {
   let [customers, setCustomers] = useState([])
   let [transactions, setTransactions] = useState([])
@@ -8,6 +9,7 @@ export default function Home() {
   let [nameFilter, setNameFilter] = useState('')
   let [amountFilter, setAmountFilter] = useState('')
   let [aggregatedData, setAggregatedData] = useState([])
+  let [selectedCustomer, setSelectedCustomer] = useState(null) // New state variable
 
   async function getData() {
     try {
@@ -69,20 +71,25 @@ export default function Home() {
     setAggregatedData(aggregatedArray);
   }, [transactions]);
 
+  const handleShowGraph = (customer) => {
+    setSelectedCustomer(customer);
+  };
+
   return (
     <div className="container">
       <div className="filters">
         <input type="text" className='form-control my-3' placeholder="Filter by name" value={nameFilter} onChange={e => setNameFilter(e.target.value)} />
-        <input type="text" className='form-control my-3' placeholder="Filter by amount" value={amountFilter}  onChange={e => setAmountFilter(e.target.value)}  />
+        <input type="text" className='form-control my-3' placeholder="Filter by amount" value={amountFilter} onChange={e => setAmountFilter(e.target.value)} />
       </div>
       <table className='table table_striped text-center fst-italic'>
-        <thead className='active table-dark' >
-          <tr >
+        <thead className='active table-dark'>
+          <tr>
             <th>ID</th>
             <th>Name</th>
             <th>Transaction Date</th>
             <th>Transaction Amount</th>
             <th>Total Amount</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -99,7 +106,12 @@ export default function Home() {
                   <td>{trans.date}</td>
                   <td>{trans.amount}</td>
                   {index === 0 && (
-                    <td rowSpan={customer.transactions.length}>{customer.totalAmount}</td>
+                    <>
+                      <td rowSpan={customer.transactions.length}>{customer.totalAmount}</td>
+                      <td rowSpan={customer.transactions.length}>
+                        <button className='btn btn-success' onClick={() => handleShowGraph(customer)}>Show Graph</button>
+                      </td>
+                    </>
                   )}
                 </tr>
               ))}
@@ -107,7 +119,15 @@ export default function Home() {
           ))}
         </tbody>
       </table>
-      <ChartComponent data={aggregatedData} />
+      {selectedCustomer && (
+        <div>
+          <h2>{selectedCustomer.name}'s Transactions</h2>
+          <ChartComponent data={selectedCustomer.transactions.map(trans => ({
+            date: trans.date,
+            totalAmount: parseFloat(trans.amount)
+          }))} />
+        </div>
+      )}
     </div>
   )
 }
